@@ -1,9 +1,11 @@
+import SalmonAllocationPage from "./pages/SalmonAllocationPage";
+
 function App() {
-  return (
-			<div className="bg-white items-center justify-center">
-				Salmon allocation system
-			</div>
-		);
+	return (
+		<div>
+			<SalmonAllocationPage />
+		</div>
+	);
 }
 
 export default App;

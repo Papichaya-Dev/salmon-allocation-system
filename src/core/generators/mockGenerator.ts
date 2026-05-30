@@ -7,6 +7,8 @@ import type {
 	Warehouse,
 } from "../../types";
 
+export const totalOrders: number = 5200;
+
 export const mockWarehouses: Warehouse[] = [
 	{ id: "WH-001", name: "Bangkok Storage Hub", stock: 150000 },
 	{ id: "WH-002", name: "Mahachai Seafood Center", stock: 80000 },
@@ -127,6 +129,6 @@ export const generateMockData = (
 	};
 };
 
-const mockDataResult = generateMockData(5200);
+const mockDataResult = generateMockData(totalOrders);
 export const initialOrders = mockDataResult.orders;
 export const initialCustomers = mockDataResult.customers;

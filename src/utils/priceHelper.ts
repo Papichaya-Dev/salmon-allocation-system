@@ -57,3 +57,17 @@ export function calculateNetUnitPrice(
 
 	return bankersRound(basePrice * tierMultiplier, 2);
 };
+
+export const formatPrice = (
+	value: number | string | undefined | null,
+): string => {
+	if (value === undefined || value === null) return "0.00";
+
+	const num = typeof value === "string" ? parseFloat(value) : value;
+	if (Number.isNaN(num)) return "0.00";
+
+	return num.toLocaleString("th-TH", {
+		minimumFractionDigits: 2,
+		maximumFractionDigits: 2,
+	});
+};

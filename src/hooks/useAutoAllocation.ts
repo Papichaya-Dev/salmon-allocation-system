@@ -1,12 +1,12 @@
 import { useCallback, useState } from "react";
 import { executeAutoAllocation } from "../core/allocators/autoAllocator";
-import type {
-	AllocationState,
-	Customer,
-	SubOrder,
-	Supplier,
-	Warehouse,
-} from "../types";
+import {
+	initialCustomers,
+	initialOrders,
+	mockSuppliers,
+	mockWarehouses,
+} from "../core/generators/mockGenerator";
+import type { AllocationState } from "../types";
 
 export const useAutoAllocation = () => {
 	const [result, setResult] = useState<AllocationState | null>(null);
@@ -15,10 +15,10 @@ export const useAutoAllocation = () => {
 
 	const runAutoAllocation = useCallback(
 		async (
-			rawSubOrders: SubOrder[],
-			rawWarehouses: Warehouse[],
-			rawSuppliers: Supplier[],
-			rawCustomers: Customer[],
+			rawSubOrders = initialOrders,
+			rawWarehouses = mockWarehouses,
+			rawSuppliers = mockSuppliers,
+			rawCustomers = initialCustomers,
 		) => {
 			setIsLoading(true);
 			setErrorMessage(null);
