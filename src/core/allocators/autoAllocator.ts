@@ -135,27 +135,6 @@ export const executeAutoAllocation = (
 			2,
 		);
 
-		let suggestedWarehouseId: string | undefined;
-		let suggestedWarehouseName: string | undefined;
-
-		if (shortageQty > 0 && allowedQtyByCredit > allocatedFromWarehouse) {
-			const neededQty = bankersRound(
-				allowedQtyByCredit - allocatedFromWarehouse,
-				2,
-			);
-
-			for (const altWarehouseId of Object.keys(warehouseMap)) {
-				if (altWarehouseId === chosenWarehouseId) continue;
-
-				const altWarehouse = warehouseMap[altWarehouseId];
-				if (altWarehouse && altWarehouse.stock >= neededQty) {
-					suggestedWarehouseId = altWarehouse.id;
-					suggestedWarehouseName = altWarehouse.name;
-					break;
-				}
-			}
-		}
-
 		const totalOrderCost = bankersRound(allocatedFromWarehouse * unitPrice, 2);
 		customerUsedCreditMap[currentOrder.customerId] = bankersRound(
 			alreadyUsedCredit + totalOrderCost,
@@ -171,8 +150,6 @@ export const executeAutoAllocation = (
 			actualWarehouseId: chosenWarehouseId,
 			actualSupplierId: chosenSupplierId,
 			shortageQty,
-			suggestedWarehouseId,
-			suggestedWarehouseName,
 		};
 	}
 

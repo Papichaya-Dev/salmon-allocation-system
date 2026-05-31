@@ -53,7 +53,7 @@ export default function DashboardOverview({ result }: DashboardOverviewProps) {
     }, [result]);
 
 	return (
-		<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+		<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-3">
 			<StatCard
 				title="Remaining stock"
 				value={`${formatPrice(stats.totalStock)} kg`}
@@ -67,7 +67,7 @@ export default function DashboardOverview({ result }: DashboardOverviewProps) {
 			/>
 			<StatCard
 				title="Orders Fulfilled"
-				value={`${stats.fulfilledCount.toLocaleString()} / ${totalOrders}`}
+				value={`${stats.fulfilledCount.toLocaleString()} / ${totalOrders.toLocaleString()}`}
 				subText={
 					<span className="text-xs text-emerald-600 font-bold flex flex-row items-center gap-1.5 mt-2.5">
 						<Check className="w-3.5 h-3.5" /> Success{" "}
@@ -81,9 +81,7 @@ export default function DashboardOverview({ result }: DashboardOverviewProps) {
 				title="Unfulfilled & Partial"
 				value={`${stats.totalBlockedOrders.toLocaleString()} orders`}
 				subText={
-					<span
-						className="text-xs text-[#DB2C2C] font-bold flex flex-row items-center gap-1.5 mt-2.5"
-					>
+					<span className="text-xs text-[#DB2C2C] font-bold flex flex-row items-center gap-1.5 mt-2.5">
 						<Ban className="w-3.5 h-3.5" />
 						<span>
 							Credit Blocked: {stats.creditLimitBlockedCount.toLocaleString()}{" "}

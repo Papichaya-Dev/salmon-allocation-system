@@ -10,11 +10,11 @@ import type {
 export const totalOrders: number = 5200;
 
 export const mockWarehouses: Warehouse[] = [
-	{ id: "WH-001", name: "Bangkok Storage Hub", stock: 150000 },
-	{ id: "WH-002", name: "Mahachai Seafood Center", stock: 80000 },
+	{ id: "WH-001", name: "Bangkok Storage Hub", stock: 350000 },
+	{ id: "WH-002", name: "Mahachai Seafood Center", stock: 100000 },
 	{ id: "WH-003", name: "Rangsit Logistics Park", stock: 120000 },
-	{ id: "WH-004", name: "Rama 2 Cold Center", stock: 95000 },
-	{ id: "WH-005", name: "Suvarnabhumi Cargo Hub", stock: 110000 },
+	{ id: "WH-004", name: "Rama 2 Cold Center", stock: 150000 },
+	{ id: "WH-005", name: "Suvarnabhumi Cargo Hub", stock: 210000 },
 ];
 
 export const mockSuppliers: Supplier[] = [

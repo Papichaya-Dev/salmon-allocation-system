@@ -45,8 +45,6 @@ export interface AllocationResult extends SubOrder {
 	actualWarehouseId: string;
 	actualSupplierId: string;
 	shortageQty: number;
-	suggestedWarehouseId?: string;
-	suggestedWarehouseName?: string;
 	creditError?: string | null;
 	stockWarning?: string | null;
 }
