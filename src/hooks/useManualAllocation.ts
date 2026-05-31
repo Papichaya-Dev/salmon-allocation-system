@@ -5,9 +5,9 @@ import { bankersRound } from "../utils/priceHelper";
 export const useManualAllocation = (
 	setResult: React.Dispatch<React.SetStateAction<AllocationState | null>>,
 ) => {
-	const updateRequestedQty = useCallback(
+	const updateAllocatedQty = useCallback(
 		(subOrderId: string, newQty: number) => {
-			const targetQty = Math.max(0, newQty);
+			let finalAllocated = Math.max(0, newQty);
 
 			setResult((prevResult) => {
 				if (!prevResult) return prevResult;
@@ -19,7 +19,10 @@ export const useManualAllocation = (
 				const customerMap = { ...prevResult.updatedCustomers };
 				const orderMap = { ...prevResult.byId };
 
-				const activeWarehouse = warehouseMap[currentOrder.warehouseId];
+				const activeWarehouse =
+					warehouseMap[
+						currentOrder.actualWarehouseId || currentOrder.warehouseId
+					];
 				const activeCustomer = customerMap[currentOrder.customerId];
 
 				if (!activeWarehouse || !activeCustomer) return prevResult;
@@ -33,22 +36,20 @@ export const useManualAllocation = (
 					2,
 				);
 
-				let allocatedQty = targetQty;
-				let stockWarningMsg: string | null = null;
-				let creditErrorMsg: string | null = null;
-
-				if (activeWarehouse.stock > allocatedQty) {
+				if (activeWarehouse.stock >= finalAllocated) {
 					activeWarehouse.stock = bankersRound(
-						activeWarehouse.stock - allocatedQty,
+						activeWarehouse.stock - finalAllocated,
 						2,
 					);
 				} else {
-					allocatedQty = activeWarehouse.stock;
+					finalAllocated = activeWarehouse.stock;
 					activeWarehouse.stock = 0;
-					stockWarningMsg = `Insufficient stock (Max allowed: ${allocatedQty} kg)`;
 				}
 
-				let totalCost = bankersRound(allocatedQty * currentOrder.unitPrice, 2);
+				let totalCost = bankersRound(
+					finalAllocated * currentOrder.unitPrice,
+					2,
+				);
 
 				if (activeCustomer.creditLimit >= totalCost) {
 					activeCustomer.creditLimit = bankersRound(
@@ -57,30 +58,33 @@ export const useManualAllocation = (
 					);
 				} else {
 					activeWarehouse.stock = bankersRound(
-						activeWarehouse.stock + allocatedQty,
+						activeWarehouse.stock + finalAllocated,
 						2,
 					);
+					finalAllocated = 0;
 					totalCost = 0;
-					creditErrorMsg = `Exceeded available credit limit`;
-					stockWarningMsg = null;
 				}
 
 				let finalStatus: AllocationStatus = "Unfulfilled";
-				if (allocatedQty === targetQty && targetQty > 0) {
+				if (
+					finalAllocated >= currentOrder.requestedQty &&
+					currentOrder.requestedQty > 0
+				) {
 					finalStatus = "Fulfilled";
-				} else if (allocatedQty > 0) {
+				} else if (finalAllocated > 0) {
 					finalStatus = "Partial";
 				}
 
 				orderMap[subOrderId] = {
 					...currentOrder,
-					requestedQty: targetQty,
-					allocatedQty,
+					requestedQty: currentOrder.requestedQty,
+					allocatedQty: finalAllocated,
 					totalCost,
 					status: finalStatus,
-					shortageQty: bankersRound(targetQty - allocatedQty, 2),
-					stockWarning: stockWarningMsg,
-					creditError: creditErrorMsg,
+					shortageQty: bankersRound(
+						Math.max(0, currentOrder.requestedQty - finalAllocated),
+						2,
+					),
 				};
 
 				return {
@@ -93,5 +97,5 @@ export const useManualAllocation = (
 		},
 		[setResult],
 	);
-	return { updateRequestedQty };
+	return { updateAllocatedQty };
 };

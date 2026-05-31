@@ -1,9 +1,9 @@
 import { WarehouseIcon } from "lucide-react";
 import React from "react";
-import { mockWarehouses } from "../../core/generators/mockGenerator";
-import type { Warehouse } from "../../types";
-import { formatPrice } from "../../utils/priceHelper";
-import ProgressBar from "../common/ProgressBar";
+import { mockWarehouses } from "../core/generators/mockGenerator";
+import type { Warehouse } from "../types";
+import { formatPrice } from "../utils/priceHelper";
+import ProgressBar from "./common/ProgressBar";
 
 interface WarehouseCardProps {
 	id: string;

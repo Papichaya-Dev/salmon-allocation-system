@@ -1,9 +1,9 @@
 import { AlertCircle, Ban, Check, CheckCircle2, Database, DollarSign } from "lucide-react";
 import React, { useMemo } from "react";
-import { totalOrders } from "../../core/generators/mockGenerator";
-import type { AllocationState } from "../../types";
-import { calculateDashboardStats } from "../../utils/dashboardStatsHelpers";
-import { formatPrice } from "../../utils/priceHelper";
+import { totalOrders } from "../core/generators/mockGenerator";
+import type { AllocationState } from "../types";
+import { calculateDashboardStats } from "../utils/dashboardStatsHelpers";
+import { formatPrice } from "../utils/priceHelper";
 
 interface StatCardProps {
 	title: string;

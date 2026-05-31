@@ -104,7 +104,7 @@ export const generateMockData = (
 			warehouses[Math.floor(Math.random() * warehouses.length)];
 		const supplierId = suppliers[Math.floor(Math.random() * suppliers.length)];
 
-		const requestedQty = Math.floor(Math.random() * (300 - 5 + 1) + 5);
+		const requestedQty = Math.floor(Math.random() * (150 - 5 + 1) + 5);
 
 		baseTime += Math.floor(Math.random() * (5 - 1 + 1) + 1) * 60 * 1000;
 		const createdAt = new Date(baseTime).toISOString();

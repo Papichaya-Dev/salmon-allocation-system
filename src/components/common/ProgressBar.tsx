@@ -14,7 +14,7 @@ export default function ProgressBar({ value, max }: ProgressBarProps) {
 	};
 
 	return (
-		<div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden mt-3">
+		<div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden mt-2">
 			<div
 				className={`h-full rounded-full transition-all duration-500 ease-out ${getBarColor(percentage)}`}
 				style={{ width: `${percentage}%` }}
