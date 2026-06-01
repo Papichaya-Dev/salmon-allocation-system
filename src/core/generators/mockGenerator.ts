@@ -129,7 +129,3 @@ export const generateMockData = (
 		customers: customers,
 	};
 };
-
-const mockDataResult = generateMockData(totalOrders);
-export const initialOrders = mockDataResult.orders;
-export const initialCustomers = mockDataResult.customers;

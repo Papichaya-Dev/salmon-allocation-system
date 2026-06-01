@@ -1,22 +1,23 @@
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { Edit2, Save, X } from "lucide-react";
+import { Edit2, Save, Search, X } from "lucide-react";
 import { useRef, useState } from "react";
 import type { AllocationResult, Customer, Warehouse } from "../types";
 import { bankersRound, formatPrice } from "../utils/priceHelper";
+import { Button } from "./common/Button";
 import { CustomDropdown } from "./common/CustomDropdown";
 import ProgressBar from "./common/ProgressBar";
 import StatusBadge from "./common/StatusBadge";
 
-const COLUMN_WIDTHS = {
-	subOrder: "w-[160px] min-w-[160px]",
+const COLUMN_STYLES = {
+	subOrder: "w-[150px] min-w-[150px]",
 	customer: "w-[220px] min-w-[220px]",
 	priority: "w-[135px] min-w-[135px]",
 	requested: "w-[80px] min-w-[80px] text-right",
 	allocated: "w-[140px] min-w-[140px] text-right pl-4",
 	warehouse: "w-[140px] min-w-[140px] text-center",
-	supplier: "w-[80px] min-w-[80px] text-right",
-	unitPrice: "w-[80px] min-w-[80px] text-right",
-	total: "w-[120px] min-w-[120px] text-right",
+	supplier: "w-[90px] min-w-[90px] text-center",
+	unitPrice: "w-[85px] min-w-[85px] text-center ml-2",
+	total: "w-[100px] min-w-[100px] text-center",
 	status: "w-[120px] min-w-[120px] flex justify-center",
 	action: "w-[100px] min-w-[100px] text-center pl-2",
 };
@@ -165,20 +166,20 @@ export default function OrderTable({
 	};
 
 	return (
-		<div className="bg-white border border-slate-200 rounded-2xl shadow-2xs overflow-hidden font-sans">
-			<thead className="sticky top-0 z-20 bg-slate-50/95 backdrop-blur-xs border-b border-slate-200 text-slate-500 text-[11px] font-bold tracking-wider uppercase shadow-3xs">
+		<div className="bg-white border border-slate-200 rounded-2xl overflow-hidden">
+			<thead className="sticky top-0 z-20 bg-slate-700/95 backdrop-blur-xs border-b border-slate-200 text-white text-xs font-bold tracking-wider uppercase">
 				<tr className="flex items-center px-6 py-3.5">
-					<th className={"w-40 min-w-40"}>Order</th>
-					<th className={COLUMN_WIDTHS.customer}>Customer</th>
-					<th className={COLUMN_WIDTHS.priority}>Priority</th>
-					<th className={COLUMN_WIDTHS.requested}>Requested</th>
-					<th className={COLUMN_WIDTHS.allocated}>Allocated (kg)</th>
-					<th className={COLUMN_WIDTHS.warehouse}>Warehouse</th>
-					<th className={COLUMN_WIDTHS.supplier}>Supplier</th>
-					<th className={COLUMN_WIDTHS.unitPrice}>Unit Price</th>
-					<th className={COLUMN_WIDTHS.total}>Total</th>
-					<th className={COLUMN_WIDTHS.status}>Status</th>
-					<th className={COLUMN_WIDTHS.action}>Action</th>
+					<th className={COLUMN_STYLES.subOrder}>Order</th>
+					<th className={COLUMN_STYLES.customer}>Customer</th>
+					<th className={COLUMN_STYLES.priority}>Priority</th>
+					<th className={COLUMN_STYLES.requested}>Requested</th>
+					<th className={COLUMN_STYLES.allocated}>Allocated (kg)</th>
+					<th className={COLUMN_STYLES.warehouse}>Warehouse</th>
+					<th className={COLUMN_STYLES.supplier}>Supplier</th>
+					<th className={COLUMN_STYLES.unitPrice}>Unit Price</th>
+					<th className={COLUMN_STYLES.total}>Total</th>
+					<th className={COLUMN_STYLES.status}>Status</th>
+					<th className={COLUMN_STYLES.action}>Action</th>
 				</tr>
 			</thead>
 			<div
@@ -186,178 +187,193 @@ export default function OrderTable({
 				className="overflow-auto relative min-h-50"
 				style={{ height: `500px` }}
 			>
-				<table className="w-full text-left border-collapse table-fixed">
-					<tbody
-						className="block relative w-full"
-						style={{ height: `${rowVirtualizer.getTotalSize()}px` }}
-					>
-						{rowVirtualizer.getVirtualItems().map((virtualRow) => {
-							const row = orders[virtualRow.index];
-							const isEditing = editData.orderId === row.id;
-							const hasError = isEditing && !!validationError.message;
-							return (
-								<tr
-									key={row.id}
-									data-index={virtualRow.index}
-									ref={rowVirtualizer.measureElement}
-									className={`flex items-center px-6 py-1 border-b border-slate-100 bg-white hover:bg-slate-50/60 transition-colors duration-100 absolute top-0 left-0 w-full`}
-									style={{
-										transform: `translateY(${virtualRow.start}px)`,
-									}}
-								>
-									{/* Sub-Order */}
-									<td className={COLUMN_WIDTHS.subOrder}>
-										<div className="text-sm font-bold text-slate-800 leading-tight">
-											{row.id}
-										</div>
-										<div className="text-[11px] font-medium text-slate-400 mt-0.5">
-											{row.itemId}
-										</div>
-									</td>
-									{/* Customer */}
-									<td className={COLUMN_WIDTHS.customer}>
-										<div className="flex flex-col gap-1 py-1 w-full">
-											<div
-												className="text-sm font-bold text-slate-800 truncate leading-tight"
-												title={row.customerName}
-											>
-												{row.customerName}
-											</div>
-											<div className="w-[85%] flex flex-col gap-0.5">
-												<span className="text-[11px] font-medium text-slate-400 leading-none">
-													Credit ฿
-													{formatPrice(customers[row.customerId]?.creditUsed)} /
-													฿{formatPrice(row.creditLimit)}
-												</span>
-												<ProgressBar
-													value={customers[row.customerId]?.creditUsed}
-													max={row.creditLimit}
-													variant="credit"
-												/>
-											</div>
-										</div>
-									</td>
-									<td className={COLUMN_WIDTHS.priority}>
-										<StatusBadge type={row.priority} />
-									</td>
-									{/* Requested */}
-									<td
-										className={`${COLUMN_WIDTHS.requested} text-sm font-bold text-slate-800`}
+				{orders.length === 0 ? (
+					<div className="absolute inset-0 flex flex-col items-center justify-center gap-4 text-slate-400">
+						<div className="p-4 bg-slate-50 rounded-full">
+							<Search className="w-12 h-12 stroke-[1.5]" />
+						</div>
+						<p className="text-lg font-semibold text-slate-500">
+							No orders match filters
+						</p>
+					</div>
+				) : (
+					<table className="w-full text-left border-collapse table-fixed">
+						<tbody
+							className="block relative w-full"
+							style={{ height: `${rowVirtualizer.getTotalSize()}px` }}
+						>
+							{rowVirtualizer.getVirtualItems().map((virtualRow) => {
+								const row = orders[virtualRow.index];
+								const isEditing = editData.orderId === row.id;
+								const hasError = isEditing && !!validationError.message;
+								return (
+									<tr
+										key={row.id}
+										data-index={virtualRow.index}
+										ref={rowVirtualizer.measureElement}
+										className={`flex items-center px-6 py-1.5 border-b border-slate-200 bg-white hover:bg-slate-100/60 absolute top-0 left-0 w-full`}
+										style={{
+											transform: `translateY(${virtualRow.start}px)`,
+										}}
 									>
-										{formatPrice(row.requestedQty)}
-									</td>
-									{/* Allocated */}
-									<td className={COLUMN_WIDTHS.allocated}>
-										{isEditing ? (
-											<div className="relative flex flex-col w-full">
-												<input
-													type="number"
-													value={editData.qty}
-													onChange={(event) => handleInputChange(event, row)}
-													className={`
+										{/* Sub-Order */}
+										<td className={COLUMN_STYLES.subOrder}>
+											<div className="text-sm font-bold text-slate-800 leading-tight">
+												{row.id}
+											</div>
+											<div className="text-xs font-medium text-slate-400 mt-0.5">
+												{row.itemId}
+											</div>
+										</td>
+										{/* Customer */}
+										<td className={COLUMN_STYLES.customer}>
+											<div className="flex flex-col gap-1 py-1 w-full">
+												<div
+													className="text-sm font-bold text-slate-800 truncate leading-tight"
+													title={row.customerName}
+												>
+													{row.customerName}
+												</div>
+												<div className="w-[85%] flex flex-col gap-0.5">
+													<span className="text-[11px] font-medium text-slate-400 leading-none">
+														Credit ฿
+														{formatPrice(customers[row.customerId]?.creditUsed)}{" "}
+														/ ฿{formatPrice(row.creditLimit)}
+													</span>
+													<ProgressBar
+														value={customers[row.customerId]?.creditUsed}
+														max={row.creditLimit}
+														variant="credit"
+													/>
+												</div>
+											</div>
+										</td>
+										{/* Priority */}
+										<td className={COLUMN_STYLES.priority}>
+											<StatusBadge type={row.priority} />
+										</td>
+										{/* Requested */}
+										<td
+											className={`${COLUMN_STYLES.requested} text-sm font-bold text-slate-800`}
+										>
+											{formatPrice(row.requestedQty)}
+										</td>
+										{/* Allocated */}
+										<td className={COLUMN_STYLES.allocated}>
+											{isEditing ? (
+												<div className="relative flex flex-col w-full">
+													<input
+														type="number"
+														value={editData.qty}
+														onChange={(event) => handleInputChange(event, row)}
+														className={`
 														w-full border-2 rounded-lg px-2 py-1.5 text-sm font-bold text-right transition-colors duration-200 outline-none
 														${
 															hasError
 																? "border-rose-500 text-rose-600 bg-white focus:border-rose-600"
-																: "border-slate-400 text-slate-800 bg-slate-50 focus:bg-white focus:border-slate-400"
+																: "border-slate-300/95 text-slate-800 bg-white focus:bg-white focus:border-slate-400"
 														}
 													`}
+													/>
+													{hasError && (
+														<span className="absolute right-0 -bottom-4 text-[10px] font-bold tracking-tight bg-white px-1 whitespace-nowrap z-10 text-rose-600">
+															{validationError.message}
+														</span>
+													)}
+												</div>
+											) : (
+												<span className="text-sm font-bold text-slate-900 bg-slate-50 px-2.5 py-1 rounded-md border border-slate-100">
+													{formatPrice(row.allocatedQty)}
+												</span>
+											)}
+										</td>
+										{/* Warehouse */}
+										<td
+											className={`${COLUMN_STYLES.warehouse} text-sm font-semibold text-slate-600`}
+										>
+											{isEditing ? (
+												<CustomDropdown
+													label=""
+													value={editData.warehouseId}
+													onChange={handleWarehouseChange}
+													options={Object.values(warehouses).map(
+														(warehouse) => ({
+															value: warehouse.id,
+															label: warehouse.name,
+														}),
+													)}
 												/>
-												{hasError && (
-													<span className="absolute right-0 -bottom-4 text-[10px] font-bold tracking-tight bg-white px-1 whitespace-nowrap z-10 text-rose-600">
-														{validationError.message}
-													</span>
-												)}
-											</div>
-										) : (
-											<span className="text-sm font-bold text-slate-900 bg-slate-50 px-2.5 py-1 rounded-md border border-slate-100">
-												{formatPrice(row.allocatedQty)}
-											</span>
-										)}
-									</td>
-									{/* Warehouse */}
-									<td
-										className={`${COLUMN_WIDTHS.warehouse} text-sm font-semibold text-slate-600`}
-									>
-										{isEditing ? (
-											<CustomDropdown
-												label=""
-												value={editData.warehouseId}
-												onChange={handleWarehouseChange}
-												options={Object.values(warehouses).map((warehouse) => ({
-													value: warehouse.id,
-													label: warehouse.name,
-												}))}
-											/>
-										) : (
-											<span>{row.actualWarehouseId}</span>
-										)}
-									</td>
-									{/* Supplier */}
-									<td
-										className={`${COLUMN_WIDTHS.supplier} text-sm font-semibold text-slate-600`}
-									>
-										{row.actualSupplierId}
-									</td>
+											) : (
+												<span>{row.actualWarehouseId}</span>
+											)}
+										</td>
+										{/* Supplier */}
+										<td
+											className={`${COLUMN_STYLES.supplier} text-sm font-semibold text-slate-600`}
+										>
+											{row.actualSupplierId}
+										</td>
 
-									{/* Unit Price */}
-									<td
-										className={`${COLUMN_WIDTHS.unitPrice} text-sm font-medium text-slate-500`}
-									>
-										฿{formatPrice(row.unitPrice)}
-									</td>
-									{/* Total */}
-									<td
-										className={`${COLUMN_WIDTHS.total} text-sm font-bold text-slate-800`}
-									>
-										฿{formatPrice(row.totalCost)}
-									</td>
-									{/* Status */}
-									<td className={COLUMN_WIDTHS.status}>
-										<StatusBadge type={row.status} />
-									</td>
-									{/* Action Buttons */}
-									<td
-										className={`${COLUMN_WIDTHS.action} flex justify-center gap-2 items-center h-full`}
-									>
-										{isEditing ? (
-											<>
-												<button
-													onClick={() => handleSaveQtyAndWarehouse(row.id)}
-													disabled={hasError}
-													className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold transition-all duration-150 shadow-xs
-                                                        ${hasError ? "bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed shadow-none" : "bg-emerald-600 text-white hover:bg-emerald-700 active:bg-emerald-800 cursor-pointer"}
-                                                    `}
-													type="button"
-												>
-													<Save className="w-4 h-4 stroke-[2.25]" />
-													<span>Save</span>
-												</button>
-												<button
-													onClick={onCancel}
-													className="p-1.5 rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 active:bg-slate-300 transition-colors cursor-pointer border border-transparent"
-													title="Cancel"
-													type="button"
-												>
-													<X className="w-4 h-4 stroke-[2.5]" />
-												</button>
-											</>
-										) : (
-											<button
-												onClick={() => onEditing(row)}
-												className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-600 bg-white hover:bg-slate-50 hover:text-slate-800 text-xs font-bold cursor-pointer transition-colors"
-												type="button"
-											>
-												<Edit2 className="w-3.5 h-3.5" />
-												Edit
-											</button>
-										)}
-									</td>
-								</tr>
-							);
-						})}
-					</tbody>
-				</table>
+										{/* Unit Price */}
+										<td
+											className={`${COLUMN_STYLES.unitPrice} text-sm font-medium text-slate-500`}
+										>
+											฿{formatPrice(row.unitPrice)}
+										</td>
+										{/* Total */}
+										<td
+											className={`${COLUMN_STYLES.total} text-sm font-bold text-slate-800`}
+										>
+											฿{formatPrice(row.totalCost)}
+										</td>
+										{/* Status */}
+										<td className={COLUMN_STYLES.status}>
+											<StatusBadge type={row.status} />
+										</td>
+										{/* Action Buttons */}
+										<td
+											className={`${COLUMN_STYLES.action} flex justify-center gap-2 items-center h-full`}
+										>
+											{isEditing ? (
+												<>
+													<Button
+														label="Save"
+														icon={Save}
+														disabled={hasError}
+														onClick={() => handleSaveQtyAndWarehouse(row.id)}
+														className={`
+														px-1.5 py-1.5 text-sm rounded-lg ${
+															hasError
+																? "bg-slate-200 text-slate-500 border border-slate-200 cursor-not-allowed"
+																: "bg-emerald-600 text-white"
+														}
+													`}
+													/>
+													<Button
+														icon={X}
+														onClick={onCancel}
+														className="px-1.5 py-1.5 rounded-lg bg-slate-200/95 text-slate-600 border border-transparent"
+														iconClassName="stroke-[3] text-slate-500"
+													/>
+												</>
+											) : (
+												<Button
+													label="Edit"
+													icon={Edit2}
+													onClick={() => onEditing(row)}
+													className={`
+													px-1.5 py-1.5 text-xs font-bold rounded-lg border border-slate-200 
+													bg-white text-slate-600
+												`}
+												/>
+											)}
+										</td>
+									</tr>
+								);
+							})}
+						</tbody>
+					</table>
+				)}
 			</div>
 		</div>
 	);

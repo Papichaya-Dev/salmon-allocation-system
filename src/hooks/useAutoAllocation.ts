@@ -1,10 +1,10 @@
 import { useCallback, useState } from "react";
 import { executeAutoAllocation } from "../core/allocators/autoAllocator";
 import {
-	initialCustomers,
-	initialOrders,
+	generateMockData,
 	mockSuppliers,
 	mockWarehouses,
+	totalOrders,
 } from "../core/generators/mockGenerator";
 import type { AllocationState } from "../types";
 
@@ -15,21 +15,17 @@ export const useAutoAllocation = () => {
 	const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
 	const runAutoAllocation = useCallback(
-		async (
-			rawSubOrders = initialOrders,
-			rawWarehouses = mockWarehouses,
-			rawSuppliers = mockSuppliers,
-			rawCustomers = initialCustomers,
-		) => {
+		async () => {
 			setIsLoading(true);
 			setErrorMessage(null);
-
+			await new Promise((resolve) => setTimeout(resolve, 300));
+			const initialData = generateMockData(totalOrders);
 			try {
 				const allocationResult = executeAutoAllocation(
-					rawSubOrders,
-					rawWarehouses,
-					rawSuppliers,
-					rawCustomers,
+					initialData.orders,
+					mockWarehouses,
+					mockSuppliers,
+					initialData.customers,
 				);
 
 				setAllocationState(allocationResult);

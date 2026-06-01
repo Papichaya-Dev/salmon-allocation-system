@@ -1,15 +1,15 @@
 import { useEffect } from "react";
 import AllocationFilters from "../components/AllocationFilters";
 import DashboardOverview from "../components/DashboardOverview";
-import Header from "../components/Header";
 import OrderTable from "../components/OrderTable";
+import { OrderToolbar } from "../components/OrderToolbar";
 import WarehouseStock from "../components/WarehouseStock";
 import { useAllocationFilters } from "../hooks/useAllocationFilters";
 import { useAutoAllocation } from "../hooks/useAutoAllocation";
 import { useManualAllocation } from "../hooks/useManualAllocation";
 
 function SalmonAllocationPage() {
-    const { allocationState, setAllocationState, runAutoAllocation } = useAutoAllocation();
+    const { allocationState, setAllocationState, runAutoAllocation, isLoading } = useAutoAllocation();
 	const { filteredOrders, ...filterProps } =
 		useAllocationFilters(allocationState);
 	const { updateQtyAndWarehouse } = useManualAllocation(setAllocationState);
@@ -19,27 +19,24 @@ function SalmonAllocationPage() {
     },[runAutoAllocation]);
 
 	return (
-		<div className="min-h-screen bg-[#f7f0f1] font-sans">
-			<div className="mx-auto bg-[#FFFAF5] border border-slate-200/60 shadow-sm p-6 mb-3">
-				<Header />
-			</div>
+		<div className="min-h-screen bg-[#f7f0f1] font-sans pb-6">
+			<OrderToolbar
+				isLoading={isLoading}
+				onRunAutoAllocation={runAutoAllocation}
+			/>
 			<div className="px-3">
 				<DashboardOverview result={allocationState} />
 				<WarehouseStock warehouses={allocationState?.warehouseMap} />
-				<div className="my-4">
-					<AllocationFilters
-						{...filterProps}
-						totalOrder={filteredOrders.length}
-					/>
-				</div>
-				<div className="pb-4">
-					<OrderTable
-						orders={filteredOrders}
-						warehouses={allocationState?.warehouseMap ?? {}}
-						customers={allocationState?.customerMap ?? {}}
-						onUpdateQtyAndWarehouse={updateQtyAndWarehouse}
-					/>
-				</div>
+				<AllocationFilters
+					{...filterProps}
+					totalOrder={filteredOrders.length}
+				/>
+				<OrderTable
+					orders={filteredOrders}
+					warehouses={allocationState?.warehouseMap ?? {}}
+					customers={allocationState?.customerMap ?? {}}
+					onUpdateQtyAndWarehouse={updateQtyAndWarehouse}
+				/>
 			</div>
 		</div>
 	);

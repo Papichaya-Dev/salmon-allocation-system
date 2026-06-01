@@ -35,7 +35,7 @@ export const AllocationFilters: React.FC<AllocationFiltersProps> = ({
 	];
 
 	return (
-		<div className="flex flex-wrap items-center gap-5 p-4 bg-white border border-slate-200/70 rounded-2xl shadow-3xs w-full font-sans">
+		<div className="flex flex-wrap items-center gap-5 p-3 bg-white border border-slate-200/70 rounded-2xl w-full my-2">
 			<div className="flex items-center gap-2 flex-1 min-w-65">
 				<div className="relative w-full">
 					<Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -60,13 +60,13 @@ export const AllocationFilters: React.FC<AllocationFiltersProps> = ({
 				onChange={setSelectedStatus}
 				options={statusOptions}
 			/>
-			<div className="flex items-center gap-2 ml-auto shrink-0 px-3 py-1.5 bg-slate-50 rounded-lg border border-slate-100">
-				<span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+			<div className="flex items-center gap-2 ml-auto shrink-0 px-3 py-1.5 bg-slate-100 rounded-lg border border-slate-100">
+				<span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
 					Found
 				</span>
-				<span className="text-[14px] font-bold text-slate-700">
+				<span className="text-sm font-bold text-slate-700">
 					{totalOrder}{" "}
-					<span className="text-[12px] font-medium text-slate-400">orders</span>
+					<span className="text-xs font-medium text-slate-500">orders</span>
 				</span>
 			</div>
 		</div>

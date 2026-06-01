@@ -20,10 +20,10 @@ interface DashboardOverviewProps {
 const StatCard = React.memo(
 	({ title, value, subText, icon: Icon, iconColor }: StatCardProps) => {
 		return (
-			<div className="bg-white p-5 rounded-xl border border-slate-200/80 shadow-2xs flex justify-between items-start hover:shadow-2x">
+			<div className="bg-white p-3 rounded-xl border border-slate-200/80 shadow-2xs flex justify-between items-start">
 				<div>
-					<span className="text-sm font-medium text-slate-500">{title}</span>
-					<div className="text-2xl font-bold text-slate-900 mt-1.5 font-mono tracking-tight">
+					<span className="text-base font-bold text-slate-500">{title}</span>
+					<div className="text-2xl font-bold text-slate-900 mt-1.5 font-mono">
 						{value}
 					</div>
 					<div className="mt-1 block">{subText}</div>
@@ -53,7 +53,7 @@ export default function DashboardOverview({ result }: DashboardOverviewProps) {
     }, [result]);
 
 	return (
-		<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-3">
+		<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-2">
 			<StatCard
 				title="Remaining stock"
 				value={`${formatPrice(stats.totalStock)} kg`}
