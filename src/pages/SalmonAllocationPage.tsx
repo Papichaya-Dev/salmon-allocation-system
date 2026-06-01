@@ -27,7 +27,10 @@ function SalmonAllocationPage() {
 				<DashboardOverview result={allocationState} />
 				<WarehouseStock warehouses={allocationState?.warehouseMap} />
 				<div className="my-4">
-					<AllocationFilters {...filterProps} totalOrder={filteredOrders.length} />
+					<AllocationFilters
+						{...filterProps}
+						totalOrder={filteredOrders.length}
+					/>
 				</div>
 				<div className="pb-4">
 					<OrderTable

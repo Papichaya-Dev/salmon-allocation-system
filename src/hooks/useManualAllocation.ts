@@ -1,5 +1,5 @@
 import { useCallback } from "react";
-import type { AllocationResult, AllocationState, AllocationStatus } from "../types";
+import type { AllocationState } from "../types";
 import { bankersRound } from "../utils/priceHelper";
 
 export const useManualAllocation = (
@@ -9,25 +9,21 @@ export const useManualAllocation = (
 ) => {
 	const updateAllocatedQty = useCallback(
 		(subOrderId: string, newQty: number) => {
-			let finalAllocated = Math.max(0, newQty);
-
 			setAllocationState((prevResult) => {
 				if (!prevResult) return prevResult;
 
-				const currentOrder = prevResult.byId[subOrderId];
-				if (!currentOrder) return prevResult;
-
+				const orderMap = { ...prevResult.byId };
 				const warehouseMap = { ...prevResult.warehouseMap };
 				const customerMap = { ...prevResult.customerMap };
-				const orderMap = { ...prevResult.byId };
 
-				const activeWarehouse =
-					warehouseMap[
-						currentOrder.actualWarehouseId || currentOrder.warehouseId
-					];
-				const activeCustomer = customerMap[currentOrder.customerId];
+				const currentOrder = { ...orderMap[subOrderId] };
+				if (!currentOrder) return prevResult;
 
-				if (!activeWarehouse || !activeCustomer) return prevResult;
+				const warehouseId = currentOrder.actualWarehouseId || currentOrder.warehouseId;
+				const customerId = currentOrder.customerId;
+
+				const activeWarehouse = { ...warehouseMap[warehouseId] };
+				const activeCustomer = { ...customerMap[customerId] };
 
 				activeWarehouse.stock = bankersRound(
 					activeWarehouse.stock + currentOrder.allocatedQty,
@@ -36,69 +32,66 @@ export const useManualAllocation = (
 					Math.max(0, activeCustomer.creditUsed - currentOrder.totalCost),
 				);
 
-				if (activeWarehouse.stock >= finalAllocated) {
-					activeWarehouse.stock = bankersRound(activeWarehouse.stock - finalAllocated);
-				} else {
-					finalAllocated = activeWarehouse.stock;
-					activeWarehouse.stock = 0;
-				}
+				let finalAllocated = Math.min(
+					Math.max(0, newQty),
+					activeWarehouse.stock,
+				);
 
-				let totalCost = bankersRound(finalAllocated * currentOrder.unitPrice);
+				const costForNewQty = bankersRound(
+					finalAllocated * currentOrder.unitPrice,
+				);
 				const availableCredit = bankersRound(
 					Math.max(0, activeCustomer.creditLimit - activeCustomer.creditUsed),
 				);
 
-				if (availableCredit >= totalCost) {
-					activeCustomer.creditUsed = bankersRound(activeCustomer.creditUsed + totalCost);
-				} else {
-					activeWarehouse.stock = bankersRound(activeWarehouse.stock + finalAllocated);
-					finalAllocated = 0;
-					totalCost = 0;
+				if (availableCredit < costForNewQty) {
+					finalAllocated = Math.floor(availableCredit / currentOrder.unitPrice);
 				}
 
-				let finalStatus: AllocationStatus = "Unfulfilled";
-				if (
+				const finalCost = bankersRound(finalAllocated * currentOrder.unitPrice);
+				activeWarehouse.stock = bankersRound(
+					activeWarehouse.stock - finalAllocated,
+				);
+
+				currentOrder.allocatedQty = finalAllocated;
+				currentOrder.totalCost = finalCost;
+				currentOrder.status =
 					finalAllocated >= currentOrder.requestedQty &&
 					currentOrder.requestedQty > 0
-				) {
-					finalStatus = "Fulfilled";
-				} else if (finalAllocated > 0) {
-					finalStatus = "Partial";
-				}
+						? "Fulfilled"
+						: finalAllocated > 0
+							? "Partial"
+							: "Unfulfilled";
+				currentOrder.shortageQty = bankersRound(
+					Math.max(0, currentOrder.requestedQty - finalAllocated),
+				);
 
-				orderMap[subOrderId] = {
-					...currentOrder,
-					requestedQty: currentOrder.requestedQty,
-					allocatedQty: finalAllocated,
-					totalCost,
-					status: finalStatus,
-					shortageQty: bankersRound(
-						Math.max(0, currentOrder.requestedQty - finalAllocated),
-					),
-				};
+				orderMap[subOrderId] = currentOrder;
+				warehouseMap[warehouseId] = activeWarehouse;
 
 				let totalCreditUsed = 0;
-				const customerOrders: AllocationResult[] = [];
-
-				prevResult.allIds.forEach((id: string) => {
-					const order = orderMap[id];
-					if (order && order.customerId === currentOrder.customerId) {
-						totalCreditUsed = bankersRound(totalCreditUsed + order.totalCost);
-						customerOrders.push(order);
+				prevResult.allIds.forEach((id) => {
+					if (orderMap[id].customerId === customerId) {
+						totalCreditUsed = bankersRound(
+							totalCreditUsed + orderMap[id].totalCost,
+						);
 					}
 				});
 
 				activeCustomer.creditUsed = totalCreditUsed;
+				customerMap[customerId] = activeCustomer;
 
-				customerOrders.forEach((order) => {
-					order.creditUsed = totalCreditUsed;
+				prevResult.allIds.forEach((id) => {
+					if (orderMap[id].customerId === customerId) {
+						orderMap[id] = { ...orderMap[id], creditUsed: totalCreditUsed };
+					}
 				});
 
 				return {
 					...prevResult,
 					byId: orderMap,
-					warehouseMap,
-					customerMap,
+					warehouseMap: { ...warehouseMap },
+					customerMap: { ...customerMap },
 				};
 			});
 		},

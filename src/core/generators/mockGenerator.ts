@@ -65,6 +65,7 @@ export const generateMockData = (
 			id: customerId,
 			name: customerName,
 			creditLimit: Math.floor(Math.random() * (1000000 - 50000 + 1) + 50000),
+			creditUsed: 0,
 		});
 	}
 
