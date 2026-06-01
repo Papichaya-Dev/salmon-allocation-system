@@ -108,20 +108,18 @@ export const executeAutoAllocation = (
 
 		const activeWarehouse = warehouseMap[chosenWarehouseId];
 
-		if (
-			activeWarehouse &&
-			activeWarehouse.stock > 0 &&
-			allowedQtyByCredit > 0
-		) {
-			if (activeWarehouse.stock > allowedQtyByCredit) {
-				allocatedFromWarehouse = allowedQtyByCredit;
-				activeWarehouse.stock = bankersRound(
-					activeWarehouse.stock - allowedQtyByCredit,
-				);
+		if (activeWarehouse && activeWarehouse.stock > 0 && allowedQtyByCredit > 0) {
+			const amountToAllocate = Math.min(
+				activeWarehouse.stock,
+				allowedQtyByCredit,
+			);
+			allocatedFromWarehouse = amountToAllocate;
+			activeWarehouse.stock = bankersRound(
+				activeWarehouse.stock - amountToAllocate,
+			);
+			if (allocatedFromWarehouse >= currentOrder.requestedQty) {
 				finalAllocationStatus = "Fulfilled";
 			} else {
-				allocatedFromWarehouse = activeWarehouse.stock;
-				activeWarehouse.stock = 0;
 				finalAllocationStatus = "Partial";
 			}
 		}
