@@ -23,7 +23,7 @@ const StatCard = React.memo(
 			<div className="bg-white p-3 rounded-xl border border-slate-200/80 shadow-2xs flex justify-between items-start">
 				<div>
 					<span className="text-base font-bold text-slate-500">{title}</span>
-					<div className="text-2xl font-bold text-slate-900 mt-1.5 font-mono">
+					<div className="text-2xl font-bold text-slate-900 mt-1.5">
 						{value}
 					</div>
 					<div className="mt-1 block">{subText}</div>
