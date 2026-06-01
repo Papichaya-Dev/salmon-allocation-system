@@ -1,5 +1,5 @@
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { Edit2, Save, Search, X } from "lucide-react";
+import { Edit2, Loader2, Save, Search, X } from "lucide-react";
 import { useRef, useState } from "react";
 import type { AllocationResult, Customer, Warehouse } from "../types";
 import { bankersRound, formatPrice } from "../utils/priceHelper";
@@ -28,6 +28,7 @@ type MappedAllocationResult = AllocationResult & {
 
 interface OrderTableProps {
 	orders: MappedAllocationResult[];
+	isLoading: boolean;
 	warehouses: Record<string, Warehouse>;
 	customers: Record<string, Customer>;
 	onUpdateQtyAndWarehouse: (
@@ -38,6 +39,7 @@ interface OrderTableProps {
 
 export default function OrderTable({
 	orders,
+	isLoading,
 	warehouses,
 	customers,
 	onUpdateQtyAndWarehouse,
@@ -187,7 +189,11 @@ export default function OrderTable({
 				className="overflow-auto relative min-h-50"
 				style={{ height: `500px` }}
 			>
-				{orders.length === 0 ? (
+				{isLoading ? (
+					<div className="absolute inset-0 flex items-center justify-center text-slate-400">
+						<Loader2 className="w-12 h-12 animate-spin stroke-[1.5]" />
+					</div>
+				) : orders.length === 0 ? (
 					<div className="absolute inset-0 flex flex-col items-center justify-center gap-4 text-slate-400">
 						<div className="p-4 bg-slate-50 rounded-full">
 							<Search className="w-12 h-12 stroke-[1.5]" />

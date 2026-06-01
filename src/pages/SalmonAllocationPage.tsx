@@ -32,6 +32,7 @@ function SalmonAllocationPage() {
 					totalOrder={filteredOrders.length}
 				/>
 				<OrderTable
+					isLoading={isLoading}
 					orders={filteredOrders}
 					warehouses={allocationState?.warehouseMap ?? {}}
 					customers={allocationState?.customerMap ?? {}}
