@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useEffect } from "react";
 import AllocationFilters from "../components/AllocationFilters";
 import DashboardOverview from "../components/DashboardOverview";
 import Header from "../components/Header";
@@ -10,31 +10,13 @@ import { useManualAllocation } from "../hooks/useManualAllocation";
 
 function SalmonAllocationPage() {
     const { allocationState, setAllocationState, runAutoAllocation } = useAutoAllocation();
-	const { searchTextInput, setSearchTextInput } =
+	const { filteredOrders, ...filterProps } =
 		useAllocationFilters(allocationState);
 	const { updateAllocatedQty } = useManualAllocation(setAllocationState);
 	
     useEffect(() => {
         runAutoAllocation();
     },[runAutoAllocation]);
-
-	const mappedOrders = useMemo(() => {
-		if (
-			!allocationState?.allIds ||
-			!allocationState?.byId ||
-			!allocationState?.customerMap
-		)
-			return [];
-
-		return allocationState.allIds.map((id) => {
-			const order = allocationState.byId[id];
-			const customer = allocationState.customerMap[order.customerId];
-			return {
-				...order,
-				customerName: customer.name,
-			};
-		});
-	}, [allocationState]);
 
 	return (
 		<div className="min-h-screen bg-[#f7f0f1] font-sans">
@@ -45,17 +27,13 @@ function SalmonAllocationPage() {
 				<DashboardOverview result={allocationState} />
 				<WarehouseStock warehouses={allocationState?.warehouseMap} />
 				<div className="my-4">
-					<AllocationFilters
-						searchTextInput={searchTextInput}
-						setSearchTextInput={setSearchTextInput}
-					/>
+					<AllocationFilters {...filterProps} totalOrder={filteredOrders.length} />
 				</div>
-				<div className="my-4">
+				<div className="pb-4">
 					<OrderTable
-						orders={mappedOrders}
+						orders={filteredOrders}
 						onSaveAllocatedQty={updateAllocatedQty}
 						warehouses={allocationState?.warehouseMap ?? {}}
-						customers={allocationState?.customerMap ?? {}}
 					/>
 				</div>
 			</div>

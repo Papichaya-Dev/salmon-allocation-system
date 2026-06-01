@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import type {
+	AllocationResult,
 	AllocationState,
 	PriorityFilterType,
 	StatusFilterType,
@@ -18,31 +19,34 @@ export const useAllocationFilters = (result: AllocationState | null) => {
 	const filteredOrders = useMemo(() => {
 		if (!result) return [];
 
-		const allOrders = result.allIds.map((id) => result.byId[id]);
+		const filtered: AllocationResult[] = [];
+		const searchQuery = debouncedSearchQuery.trim().toLowerCase();
 
-		return allOrders.filter((order) => {
-			const matchesSearch =
-				debouncedSearchQuery.trim() === "" ||
-				order.id.toLowerCase().includes(debouncedSearchQuery.toLowerCase()) ||
-				order.customerId
-					.toLowerCase()
-					.includes(debouncedSearchQuery.toLowerCase()) ||
-				order.itemId.toLowerCase().includes(debouncedSearchQuery.toLowerCase());
+		for (const id of result.allIds) {
+			const order = result.byId[id];
+			if (!order) continue;
+			if (selectedPriority !== "ALL" && order.priority !== selectedPriority) {
+				continue;
+			}
+			if (selectedStatus !== "ALL" && order.status !== selectedStatus) {
+				continue;
+			}
+			if (searchQuery !== "") {
+				const matchesSearch =
+					order.id.toLowerCase().includes(searchQuery) ||
+					order.itemId.toLowerCase().includes(searchQuery) ||
+					order.customerName.toLowerCase().includes(searchQuery) ||
+					order.warehouseId.toLowerCase().includes(searchQuery);
+				if (!matchesSearch) {
+					continue;
+				}
+			}
 
-			const matchesStatus =
-				selectedStatus === "ALL" || order.status === selectedStatus;
-			const matchesPriority =
-				selectedPriority === "ALL" || order.priority === selectedPriority;
+			filtered.push(order);
+		}
 
-			return matchesSearch && matchesStatus && matchesPriority;
-		});
+		return filtered;
 	}, [result, debouncedSearchQuery, selectedStatus, selectedPriority]);
-
-	const resetFilters = () => {
-		setSearchTextInput("");
-		setSelectedStatus("ALL");
-		setSelectedPriority("ALL");
-	};
 
 	return {
 		searchTextInput,
@@ -52,6 +56,5 @@ export const useAllocationFilters = (result: AllocationState | null) => {
 		selectedPriority,
 		setSelectedPriority,
 		filteredOrders,
-		resetFilters,
 	};
 };

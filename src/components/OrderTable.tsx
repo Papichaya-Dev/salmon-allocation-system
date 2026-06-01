@@ -1,7 +1,7 @@
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { Edit2, Save, X } from "lucide-react";
-import { useRef, useState } from "react";
-import type { AllocationResult, Customer, Warehouse } from "../types";
+import { useMemo, useRef, useState } from "react";
+import type { AllocationResult, Warehouse } from "../types";
 import { bankersRound, formatPrice } from "../utils/priceHelper";
 import ProgressBar from "./common/ProgressBar";
 import StatusBadge from "./common/StatusBadge";
@@ -28,7 +28,6 @@ interface OrderTableProps {
 	orders: MappedAllocationResult[];
 	onSaveAllocatedQty: (orderId: string, newQty: number) => void;
 	warehouses: Record<string, Warehouse>;
-	customers: Record<string, Customer>;
 }
 
 export default function OrderTable({
@@ -57,6 +56,16 @@ export default function OrderTable({
 		estimateSize: () => 72,
 		overscan: 5,
 	});
+
+	const creditUsedByCustomer = useMemo(() => {
+		const map: Record<string, number> = {};
+		for (const order of orders) {
+			map[order.customerId] = bankersRound(
+				(map[order.customerId] || 0) + order.totalCost,
+			);
+		}
+		return map;
+	}, [orders]);
 
 	const onEditing = (order: AllocationResult) => {
 		setEditingId(order.id);
@@ -87,10 +96,11 @@ export default function OrderTable({
 			}
 		}
 
-		const newCost = bankersRound(inputQty * currentOrder.unitPrice);
+		const totalCreditUsed = creditUsedByCustomer[currentOrder.customerId] || 0;
 		const creditUsedByOthers = bankersRound(
-			Math.max(0, currentOrder.creditUsed - currentOrder.totalCost),
+			Math.max(0, totalCreditUsed - currentOrder.totalCost),
 		);
+		const newCost = bankersRound(inputQty * currentOrder.unitPrice);
 
 		if (creditUsedByOthers + newCost > currentOrder.creditLimit) {
 			setValidationError({
@@ -189,11 +199,12 @@ export default function OrderTable({
 											</div>
 											<div className="w-[85%] flex flex-col gap-0.5">
 												<span className="text-[11px] font-medium text-slate-400 leading-none">
-													Credit ฿{formatPrice(row.creditUsed)} / ฿
-													{formatPrice(row.creditLimit)}
+													Credit ฿
+													{formatPrice(creditUsedByCustomer[row.customerId])} /
+													฿{formatPrice(row.creditLimit)}
 												</span>
 												<ProgressBar
-													value={row.creditUsed}
+													value={creditUsedByCustomer[row.customerId]}
 													max={row.creditLimit}
 												/>
 											</div>
