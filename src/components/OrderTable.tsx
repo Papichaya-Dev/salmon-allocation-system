@@ -84,10 +84,12 @@ export default function OrderTable({
 		setValidationError({ type: null, message: null });
 	};
 
-	const validateFields = (currentOrder: AllocationResult, inputQty: number) => {
-		const warehouseId =
-			currentOrder.actualWarehouseId || currentOrder.warehouseId;
-		const activeWarehouse = warehouses[warehouseId];
+	const validateFields = (
+		currentOrder: AllocationResult,
+		inputQty: number,
+		selectedWarehouseId: string,
+	) => {
+		const activeWarehouse = warehouses[selectedWarehouseId];
 
 		if (activeWarehouse) {
 			const stockAvailable = bankersRound(
@@ -156,7 +158,7 @@ export default function OrderTable({
 
 		const numValue = parseFloat(value);
 		if (!Number.isNaN(numValue) && numValue >= 0) {
-			validateFields(row, numValue);
+			validateFields(row, numValue, editData.warehouseId);
 		} else {
 			setValidationError({ type: "stock", message: "Invalid quantity" });
 		}

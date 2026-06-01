@@ -1,4 +1,4 @@
-import { AlertCircle, Ban, Check, CheckCircle2, Database, DollarSign } from "lucide-react";
+import { AlertCircle, Check, CheckCircle2, Database, DollarSign } from "lucide-react";
 import React, { useMemo } from "react";
 import { totalOrders } from "../core/generators/mockGenerator";
 import type { AllocationState } from "../types";
@@ -43,9 +43,9 @@ export default function DashboardOverview({ result }: DashboardOverviewProps) {
                 totalStock: 0,
                 totalWarehouses: 0,
                 fulfilledCount: 0,
+				partialCount: 0,
+				unfulfilledCount: 0,
                 fulfilledPercentage: "0",
-                totalBlockedOrders: 0,
-                creditLimitBlockedCount: 0,
                 totalRevenue: 0,
             };
         }
@@ -78,17 +78,9 @@ export default function DashboardOverview({ result }: DashboardOverviewProps) {
 				iconColor="text-emerald-600 bg-emerald-50"
 			/>
 			<StatCard
-				title="Unfulfilled & Partial"
-				value={`${stats.totalBlockedOrders.toLocaleString()} orders`}
-				subText={
-					<span className="text-xs text-[#DB2C2C] font-bold flex flex-row items-center gap-1.5 mt-2.5">
-						<Ban className="w-3.5 h-3.5" />
-						<span>
-							Credit Blocked: {stats.creditLimitBlockedCount.toLocaleString()}{" "}
-							orders
-						</span>
-					</span>
-				}
+				title="Unfulfilled / Partial"
+				value={`${stats.unfulfilledCount} /  ${stats.partialCount}`}
+				subText={null}
 				icon={AlertCircle}
 				iconColor="text-amber-600 bg-amber-50"
 			/>

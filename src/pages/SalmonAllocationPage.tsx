@@ -38,7 +38,6 @@ function SalmonAllocationPage() {
 						warehouses={allocationState?.warehouseMap ?? {}}
 						customers={allocationState?.customerMap ?? {}}
 						onUpdateQtyAndWarehouse={updateQtyAndWarehouse}
-
 					/>
 				</div>
 			</div>

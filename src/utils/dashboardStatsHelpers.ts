@@ -14,7 +14,6 @@ export const calculateDashboardStats = (result: AllocationState) => {
 	let partialCount = 0;
 	let unfulfilledCount = 0;
 	let totalRevenue = 0;
-	let creditLimitBlockedCount = 0;
 
 	for (const order of orderResults) {
 		if (order.status === "Fulfilled") fulfilledCount++;
@@ -22,26 +21,18 @@ export const calculateDashboardStats = (result: AllocationState) => {
 		if (order.status === "Unfulfilled") unfulfilledCount++;
 
 		totalRevenue += order.totalCost;
-
-		if (order.allocatedQty < order.requestedQty && order.shortageQty > 0) {
-			const activeWarehouse = result.warehouseMap[order.actualWarehouseId];
-			if (activeWarehouse && activeWarehouse.stock > 0) {
-				creditLimitBlockedCount++;
-			}
-		}
 	}
 
 	const fulfilledPercentage =
 		totalOrders > 0 ? ((fulfilledCount / totalOrders) * 100).toFixed(0) : "0";
-	const totalBlockedOrders = partialCount + unfulfilledCount;
 
 	return {
 		totalStock,
 		totalWarehouses,
 		fulfilledCount,
+		partialCount,
+		unfulfilledCount,
 		fulfilledPercentage,
-		totalBlockedOrders,
-		creditLimitBlockedCount,
 		totalRevenue,
 	};
 };
