@@ -7,41 +7,49 @@ export const useManualAllocation = (
 		React.SetStateAction<AllocationState | null>
 	>,
 ) => {
-	const updateAllocatedQty = useCallback(
-		(subOrderId: string, newQty: number) => {
-			setAllocationState((prevResult) => {
-				if (!prevResult) return prevResult;
+	const updateQtyAndWarehouse = useCallback(
+		(subOrderId: string, params: { qty?: number; warehouseId?: string }) => {
+			setAllocationState((prev) => {
+				if (!prev) return prev;
 
-				const orderMap = { ...prevResult.byId };
-				const warehouseMap = { ...prevResult.warehouseMap };
-				const customerMap = { ...prevResult.customerMap };
-
+				const orderMap = { ...prev.byId };
+				const warehouseMap = { ...prev.warehouseMap };
+				const customerMap = { ...prev.customerMap };
 				const currentOrder = { ...orderMap[subOrderId] };
-				if (!currentOrder) return prevResult;
 
-				const warehouseId = currentOrder.actualWarehouseId || currentOrder.warehouseId;
+				if (!currentOrder) return prev;
+
 				const customerId = currentOrder.customerId;
-
-				const activeWarehouse = { ...warehouseMap[warehouseId] };
 				const activeCustomer = { ...customerMap[customerId] };
 
-				activeWarehouse.stock = bankersRound(
-					activeWarehouse.stock + currentOrder.allocatedQty,
+				const oldWarehouseId = currentOrder.actualWarehouseId;
+				warehouseMap[oldWarehouseId] = { ...warehouseMap[oldWarehouseId] };
+				warehouseMap[oldWarehouseId].stock = bankersRound(
+					warehouseMap[oldWarehouseId].stock + currentOrder.allocatedQty,
 				);
+
+				if (params.warehouseId) {
+					currentOrder.actualWarehouseId = params.warehouseId;
+				}
+
+				const targetQty = params.qty ?? currentOrder.allocatedQty;
+				const newWarehouseId = currentOrder.actualWarehouseId;
+				warehouseMap[newWarehouseId] = { ...warehouseMap[newWarehouseId] };
+
 				activeCustomer.creditUsed = bankersRound(
 					Math.max(0, activeCustomer.creditUsed - currentOrder.totalCost),
 				);
 
 				let finalAllocated = Math.min(
-					Math.max(0, newQty),
-					activeWarehouse.stock,
+					Math.max(0, targetQty),
+					warehouseMap[newWarehouseId].stock,
 				);
 
-				const costForNewQty = bankersRound(
-					finalAllocated * currentOrder.unitPrice,
-				);
 				const availableCredit = bankersRound(
 					Math.max(0, activeCustomer.creditLimit - activeCustomer.creditUsed),
+				);
+				const costForNewQty = bankersRound(
+					finalAllocated * currentOrder.unitPrice,
 				);
 
 				if (availableCredit < costForNewQty) {
@@ -49,8 +57,8 @@ export const useManualAllocation = (
 				}
 
 				const finalCost = bankersRound(finalAllocated * currentOrder.unitPrice);
-				activeWarehouse.stock = bankersRound(
-					activeWarehouse.stock - finalAllocated,
+				warehouseMap[newWarehouseId].stock = bankersRound(
+					warehouseMap[newWarehouseId].stock - finalAllocated,
 				);
 
 				currentOrder.allocatedQty = finalAllocated;
@@ -67,10 +75,9 @@ export const useManualAllocation = (
 				);
 
 				orderMap[subOrderId] = currentOrder;
-				warehouseMap[warehouseId] = activeWarehouse;
 
 				let totalCreditUsed = 0;
-				prevResult.allIds.forEach((id) => {
+				prev.allIds.forEach((id) => {
 					if (orderMap[id].customerId === customerId) {
 						totalCreditUsed = bankersRound(
 							totalCreditUsed + orderMap[id].totalCost,
@@ -81,21 +88,17 @@ export const useManualAllocation = (
 				activeCustomer.creditUsed = totalCreditUsed;
 				customerMap[customerId] = activeCustomer;
 
-				prevResult.allIds.forEach((id) => {
+				prev.allIds.forEach((id) => {
 					if (orderMap[id].customerId === customerId) {
 						orderMap[id] = { ...orderMap[id], creditUsed: totalCreditUsed };
 					}
 				});
 
-				return {
-					...prevResult,
-					byId: orderMap,
-					warehouseMap: { ...warehouseMap },
-					customerMap: { ...customerMap },
-				};
+				return { ...prev, byId: orderMap, warehouseMap, customerMap };
 			});
 		},
 		[setAllocationState],
 	);
-	return { updateAllocatedQty };
+
+	return { updateQtyAndWarehouse };
 };

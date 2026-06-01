@@ -12,7 +12,7 @@ function SalmonAllocationPage() {
     const { allocationState, setAllocationState, runAutoAllocation } = useAutoAllocation();
 	const { filteredOrders, ...filterProps } =
 		useAllocationFilters(allocationState);
-	const { updateAllocatedQty } = useManualAllocation(setAllocationState);
+	const { updateQtyAndWarehouse } = useManualAllocation(setAllocationState);
 	
     useEffect(() => {
         runAutoAllocation();
@@ -35,8 +35,10 @@ function SalmonAllocationPage() {
 				<div className="pb-4">
 					<OrderTable
 						orders={filteredOrders}
-						onSaveAllocatedQty={updateAllocatedQty}
 						warehouses={allocationState?.warehouseMap ?? {}}
+						customers={allocationState?.customerMap ?? {}}
+						onUpdateQtyAndWarehouse={updateQtyAndWarehouse}
+
 					/>
 				</div>
 			</div>
