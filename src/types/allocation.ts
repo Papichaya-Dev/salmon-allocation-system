@@ -18,6 +18,7 @@ export interface Customer {
 	id: string;
 	name: string;
 	creditLimit: number;
+	creditUsed: number;
 }
 
 export interface Warehouse {
@@ -47,12 +48,15 @@ export interface AllocationResult extends SubOrder {
 	shortageQty: number;
 	creditError?: string | null;
 	stockWarning?: string | null;
+	customerName: string;
+	creditLimit: number,
+	creditUsed: number;
 }
 
 export interface AllocationState {
 	byId: { [subOrderId: string]: AllocationResult };
 	allIds: string[];
-	updatedWarehouses: { [warehouseId: string]: Warehouse };
-	updatedCustomers: { [customerId: string]: Customer };
+	warehouseMap: { [warehouseId: string]: Warehouse };
+	customerMap: { [customerId: string]: Customer };
 	systemErrors?: { [subOrderId: string]: string };
 }

@@ -4,11 +4,11 @@ export const calculateDashboardStats = (result: AllocationState) => {
 	const orderResults = Object.values(result.byId);
 	const totalOrders = orderResults.length;
 
-	const totalStock = Object.values(result.updatedWarehouses).reduce(
+	const totalStock = Object.values(result.warehouseMap).reduce(
 		(sum, warehouse) => sum + warehouse.stock,
 		0,
 	);
-	const totalWarehouses = Object.keys(result.updatedWarehouses).length;
+	const totalWarehouses = Object.keys(result.warehouseMap).length;
 
 	let fulfilledCount = 0;
 	let partialCount = 0;
@@ -24,7 +24,7 @@ export const calculateDashboardStats = (result: AllocationState) => {
 		totalRevenue += order.totalCost;
 
 		if (order.allocatedQty < order.requestedQty && order.shortageQty > 0) {
-			const activeWarehouse = result.updatedWarehouses[order.actualWarehouseId];
+			const activeWarehouse = result.warehouseMap[order.actualWarehouseId];
 			if (activeWarehouse && activeWarehouse.stock > 0) {
 				creditLimitBlockedCount++;
 			}

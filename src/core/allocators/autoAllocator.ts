@@ -84,10 +84,7 @@ export const executeAutoAllocation = (
 			chosenSupplierId = bestSupplierId;
 		}
 
-		const basePrice = getBasePrice(
-			currentOrder.itemId,
-			currentOrder.supplierId,
-		);
+		const basePrice = getBasePrice(currentOrder.itemId, chosenSupplierId);
 		const unitPrice = calculateNetUnitPrice(basePrice, currentOrder.priority);
 
 		const customerInfo = customerMap[currentOrder.customerId];
@@ -96,7 +93,7 @@ export const executeAutoAllocation = (
 			customerUsedCreditMap[currentOrder.customerId] || 0;
 		const availableCredit = Math.max(0, totalCreditLimit - alreadyUsedCredit);
 
-		const maxQtyAllowedByCredit = bankersRound(availableCredit / unitPrice, 2);
+		const maxQtyAllowedByCredit = bankersRound(availableCredit / unitPrice);
 
 		let allowedQtyByCredit = Math.min(
 			currentOrder.requestedQty,
@@ -120,7 +117,6 @@ export const executeAutoAllocation = (
 				allocatedFromWarehouse = allowedQtyByCredit;
 				activeWarehouse.stock = bankersRound(
 					activeWarehouse.stock - allowedQtyByCredit,
-					2,
 				);
 				finalAllocationStatus = "Fulfilled";
 			} else {
@@ -132,13 +128,18 @@ export const executeAutoAllocation = (
 
 		const shortageQty = bankersRound(
 			currentOrder.requestedQty - allocatedFromWarehouse,
-			2,
 		);
 
-		const totalOrderCost = bankersRound(allocatedFromWarehouse * unitPrice, 2);
+		let totalOrderCost = bankersRound(allocatedFromWarehouse * unitPrice);
+
+		if (
+			allowedQtyByCredit === maxQtyAllowedByCredit &&
+			allocatedFromWarehouse === allowedQtyByCredit
+		) {
+			totalOrderCost = availableCredit;
+		}
 		customerUsedCreditMap[currentOrder.customerId] = bankersRound(
 			alreadyUsedCredit + totalOrderCost,
-			2,
 		);
 
 		byId[currentOrder.id] = {
@@ -150,13 +151,30 @@ export const executeAutoAllocation = (
 			actualWarehouseId: chosenWarehouseId,
 			actualSupplierId: chosenSupplierId,
 			shortageQty,
+			customerName: customerInfo.name,
+			creditLimit: totalCreditLimit,
+			creditUsed: 0,
 		};
+	}
+
+	Object.keys(customerUsedCreditMap).forEach((customerId) => {
+		if (customerMap[customerId]) {
+			customerMap[customerId] = {
+				...customerMap[customerId],
+				creditUsed: customerUsedCreditMap[customerId],
+			};
+		}
+	});
+
+	for (const id of allIds) {
+		const order = byId[id];
+		order.creditUsed = customerUsedCreditMap[order.customerId];
 	}
 
 	return {
 		allIds,
 		byId,
-		updatedWarehouses: warehouseMap,
-		updatedCustomers: customerMap,
+		warehouseMap,
+		customerMap,
 	};
 };

@@ -9,7 +9,8 @@ import {
 import type { AllocationState } from "../types";
 
 export const useAutoAllocation = () => {
-	const [result, setResult] = useState<AllocationState | null>(null);
+	const [allocationState, setAllocationState] =
+		useState<AllocationState | null>(null);
 	const [isLoading, setIsLoading] = useState<boolean>(false);
 	const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -31,7 +32,7 @@ export const useAutoAllocation = () => {
 					rawCustomers,
 				);
 
-				setResult(allocationResult);
+				setAllocationState(allocationResult);
 			} catch (error: unknown) {
 				setErrorMessage(
 					error instanceof Error
@@ -46,8 +47,8 @@ export const useAutoAllocation = () => {
 	);
 
 	return {
-		result,
-		setResult,
+		allocationState,
+		setAllocationState,
 		isLoading,
 		errorMessage,
 		runAutoAllocation,

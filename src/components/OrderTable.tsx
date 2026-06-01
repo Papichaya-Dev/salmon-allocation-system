@@ -1,8 +1,7 @@
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { Edit2, Save, X } from "lucide-react";
-import { useMemo, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import type { AllocationResult, Customer, Warehouse } from "../types";
-import { calculateAllCustomersCredit } from "../utils/creditHelper";
 import { bankersRound, formatPrice } from "../utils/priceHelper";
 import ProgressBar from "./common/ProgressBar";
 import StatusBadge from "./common/StatusBadge";
@@ -36,7 +35,6 @@ export default function OrderTable({
 	orders,
 	onSaveAllocatedQty,
 	warehouses,
-	customers,
 }: OrderTableProps) {
 	const containerRef = useRef<HTMLDivElement>(null);
 
@@ -46,10 +44,6 @@ export default function OrderTable({
 		type: "stock" | "credit" | null;
 		message: string | null;
 	}>({ type: null, message: null });
-
-	const customerCreditMap = useMemo(() => {
-		return calculateAllCustomersCredit(orders, customers);
-	}, [orders, customers]);
 
 	/**
 	 * NOTE: Bypassing React 19 Compiler to prevent stale UI issues,
@@ -83,7 +77,6 @@ export default function OrderTable({
 		if (activeWarehouse) {
 			const stockAvailable = bankersRound(
 				activeWarehouse.stock + currentOrder.allocatedQty,
-				2,
 			);
 			if (inputQty > stockAvailable) {
 				setValidationError({
@@ -94,10 +87,12 @@ export default function OrderTable({
 			}
 		}
 
-		const { creditLimit, creditUsed } = customerCreditMap[currentOrder.customerId];
-		const newCost = bankersRound(inputQty * currentOrder.unitPrice, 2);
+		const newCost = bankersRound(inputQty * currentOrder.unitPrice);
+		const creditUsedByOthers = bankersRound(
+			Math.max(0, currentOrder.creditUsed - currentOrder.totalCost),
+		);
 
-		if (creditUsed + newCost > creditLimit) {
+		if (creditUsedByOthers + newCost > currentOrder.creditLimit) {
 			setValidationError({
 				type: "credit",
 				message: "Exceeded credit limit",
@@ -135,21 +130,21 @@ export default function OrderTable({
 
 	return (
 		<div className="bg-white border border-slate-200 rounded-2xl shadow-2xs overflow-hidden font-sans">
-			<thead className="sticky top-0 z-20 bg-slate-50/95 backdrop-blur-xs border-b border-slate-200 text-slate-500 text-[11px] font-bold tracking-wider uppercase shadow-3xs">
-				<tr className="flex items-center px-6 py-3.5">
-					<th className={"w-40 min-w-40"}>Sub-Order</th>
-					<th className={COLUMN_WIDTHS.customer}>Customer</th>
-					<th className={COLUMN_WIDTHS.priority}>Priority</th>
-					<th className={COLUMN_WIDTHS.requested}>Requested</th>
-					<th className={COLUMN_WIDTHS.allocated}>Allocated</th>
-					<th className={COLUMN_WIDTHS.warehouse}>Warehouse</th>
-					<th className={COLUMN_WIDTHS.supplier}>Supplier</th>
-					<th className={COLUMN_WIDTHS.unitPrice}>Unit Price</th>
-					<th className={COLUMN_WIDTHS.total}>Total</th>
-					<th className={COLUMN_WIDTHS.status}>Status</th>
-					<th className={COLUMN_WIDTHS.action}>Action</th>
-				</tr>
-			</thead>
+				<thead className="sticky top-0 z-20 bg-slate-50/95 backdrop-blur-xs border-b border-slate-200 text-slate-500 text-[11px] font-bold tracking-wider uppercase shadow-3xs">
+						<tr className="flex items-center px-6 py-3.5">
+							<th className={"w-40 min-w-40"}>Order</th>
+							<th className={COLUMN_WIDTHS.customer}>Customer</th>
+							<th className={COLUMN_WIDTHS.priority}>Priority</th>
+							<th className={COLUMN_WIDTHS.requested}>Requested</th>
+							<th className={COLUMN_WIDTHS.allocated}>Allocated</th>
+							<th className={COLUMN_WIDTHS.warehouse}>Warehouse</th>
+							<th className={COLUMN_WIDTHS.supplier}>Supplier</th>
+							<th className={COLUMN_WIDTHS.unitPrice}>Unit Price</th>
+							<th className={COLUMN_WIDTHS.total}>Total</th>
+							<th className={COLUMN_WIDTHS.status}>Status</th>
+							<th className={COLUMN_WIDTHS.action}>Action</th>
+						</tr>
+					</thead>
 			<div
 				ref={containerRef}
 				className="overflow-auto relative min-h-50"
@@ -164,8 +159,6 @@ export default function OrderTable({
 							const row = orders[virtualRow.index];
 							const isEditing = editingId === row.id;
 							const hasError = isEditing && !!validationError.message;
-							const { creditLimit, creditUsed } =
-								customerCreditMap[row.customerId];
 							return (
 								<tr
 									key={row.id}
@@ -196,10 +189,13 @@ export default function OrderTable({
 											</div>
 											<div className="w-[85%] flex flex-col gap-0.5">
 												<span className="text-[11px] font-medium text-slate-400 leading-none">
-													Credit ฿{formatPrice(creditUsed)} / ฿
-													{formatPrice(creditLimit)}
+													Credit ฿{formatPrice(row.creditUsed)} / ฿
+													{formatPrice(row.creditLimit)}
 												</span>
-												<ProgressBar value={creditUsed} max={creditLimit} />
+												<ProgressBar
+													value={row.creditUsed}
+													max={row.creditLimit}
+												/>
 											</div>
 										</div>
 									</td>
@@ -282,11 +278,6 @@ export default function OrderTable({
 													className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold transition-all duration-150 shadow-xs
                                                         ${hasError ? "bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed shadow-none" : "bg-emerald-600 text-white hover:bg-emerald-700 active:bg-emerald-800 cursor-pointer"}
                                                     `}
-													title={
-														hasError
-															? "Please fix data errors before saving"
-															: "Save changes"
-													}
 													type="button"
 												>
 													<Save className="w-4 h-4 stroke-[2.25]" />

@@ -1,22 +1,24 @@
 import { useCallback } from "react";
-import type { AllocationState, AllocationStatus } from "../types";
+import type { AllocationResult, AllocationState, AllocationStatus } from "../types";
 import { bankersRound } from "../utils/priceHelper";
 
 export const useManualAllocation = (
-	setResult: React.Dispatch<React.SetStateAction<AllocationState | null>>,
+	setAllocationState: React.Dispatch<
+		React.SetStateAction<AllocationState | null>
+	>,
 ) => {
 	const updateAllocatedQty = useCallback(
 		(subOrderId: string, newQty: number) => {
 			let finalAllocated = Math.max(0, newQty);
 
-			setResult((prevResult) => {
+			setAllocationState((prevResult) => {
 				if (!prevResult) return prevResult;
 
 				const currentOrder = prevResult.byId[subOrderId];
 				if (!currentOrder) return prevResult;
 
-				const warehouseMap = { ...prevResult.updatedWarehouses };
-				const customerMap = { ...prevResult.updatedCustomers };
+				const warehouseMap = { ...prevResult.warehouseMap };
+				const customerMap = { ...prevResult.customerMap };
 				const orderMap = { ...prevResult.byId };
 
 				const activeWarehouse =
@@ -29,38 +31,27 @@ export const useManualAllocation = (
 
 				activeWarehouse.stock = bankersRound(
 					activeWarehouse.stock + currentOrder.allocatedQty,
-					2,
 				);
-				activeCustomer.creditLimit = bankersRound(
-					activeCustomer.creditLimit + currentOrder.totalCost,
-					2,
+				activeCustomer.creditUsed = bankersRound(
+					Math.max(0, activeCustomer.creditUsed - currentOrder.totalCost),
 				);
 
 				if (activeWarehouse.stock >= finalAllocated) {
-					activeWarehouse.stock = bankersRound(
-						activeWarehouse.stock - finalAllocated,
-						2,
-					);
+					activeWarehouse.stock = bankersRound(activeWarehouse.stock - finalAllocated);
 				} else {
 					finalAllocated = activeWarehouse.stock;
 					activeWarehouse.stock = 0;
 				}
 
-				let totalCost = bankersRound(
-					finalAllocated * currentOrder.unitPrice,
-					2,
+				let totalCost = bankersRound(finalAllocated * currentOrder.unitPrice);
+				const availableCredit = bankersRound(
+					Math.max(0, activeCustomer.creditLimit - activeCustomer.creditUsed),
 				);
 
-				if (activeCustomer.creditLimit >= totalCost) {
-					activeCustomer.creditLimit = bankersRound(
-						activeCustomer.creditLimit - totalCost,
-						2,
-					);
+				if (availableCredit >= totalCost) {
+					activeCustomer.creditUsed = bankersRound(activeCustomer.creditUsed + totalCost);
 				} else {
-					activeWarehouse.stock = bankersRound(
-						activeWarehouse.stock + finalAllocated,
-						2,
-					);
+					activeWarehouse.stock = bankersRound(activeWarehouse.stock + finalAllocated);
 					finalAllocated = 0;
 					totalCost = 0;
 				}
@@ -83,19 +74,35 @@ export const useManualAllocation = (
 					status: finalStatus,
 					shortageQty: bankersRound(
 						Math.max(0, currentOrder.requestedQty - finalAllocated),
-						2,
 					),
 				};
+
+				let totalCreditUsed = 0;
+				const customerOrders: AllocationResult[] = [];
+
+				prevResult.allIds.forEach((id: string) => {
+					const order = orderMap[id];
+					if (order && order.customerId === currentOrder.customerId) {
+						totalCreditUsed = bankersRound(totalCreditUsed + order.totalCost);
+						customerOrders.push(order);
+					}
+				});
+
+				activeCustomer.creditUsed = totalCreditUsed;
+
+				customerOrders.forEach((order) => {
+					order.creditUsed = totalCreditUsed;
+				});
 
 				return {
 					...prevResult,
 					byId: orderMap,
-					updatedWarehouses: warehouseMap,
-					updatedCustomers: customerMap,
+					warehouseMap,
+					customerMap,
 				};
 			});
 		},
-		[setResult],
+		[setAllocationState],
 	);
 	return { updateAllocatedQty };
 };
